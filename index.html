@@ -4,74 +4,109 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Earmark</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap">
 <style>
-/* Layout: one narrow capture column on top, then transcript (wide) beside a notes rail. Highlighter yellow is the only loud color. */
+/* Layout: a stationery desk. Capture card on top, then a notepad (transcript) beside three pastel sticky notes. */
 :root{
-  --paper:#f6f7f4; --card:#ffffff; --ink:#17212b; --muted:#5d6b78; --line:#d9dedb;
-  --marker:#ffe45c; --marker-ink:#3a3000; --action:#1f5fbf; --action-ink:#ffffff; --bad:#b3261e;
-  --display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
-  --body:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --paper:#fff4ec; --dot:#f3d6c6; --card:#fffdf9; --ink:#4a3347; --muted:#84687f; --line:#efd3cc; --edge:#e3bfb8;
+  --pink:#ffdbe5; --mint:#d0f0e0; --lav:#e5dcfc; --butter:#fff1ad;
+  --marker:#ffe35e; --marker-ink:#4a3a00; --action:#c93d72; --action-ink:#ffffff; --action-edge:#96285256; --bad:#b83227;
+  --display:"Fredoka","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --body:"Nunito",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root{
-  --paper:#12171c; --card:#1a2128; --ink:#e8ecef; --muted:#97a4b0; --line:#2c363f;
-  --marker:#d9b92e; --marker-ink:#1a1500; --action:#7fb0ff; --action-ink:#0b1622; --bad:#ff8a80;
+  --paper:#221a2a; --dot:#31253b; --card:#2c2236; --ink:#f6e9f2; --muted:#bba6c2; --line:#47374f; --edge:#17111d;
+  --pink:#5a2f45; --mint:#24493e; --lav:#3c3463; --butter:#55491c;
+  --marker:#f2cf45; --marker-ink:#2b2200; --action:#ff8fb1; --action-ink:#3a0f22; --action-edge:#00000066; --bad:#ff9a8f;
   color-scheme:dark;
 }}
 *{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--body)}
-.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 64px;display:flex;flex-direction:column;gap:24px}
-header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;justify-content:space-between}
-h1{font:600 2rem/1.1 var(--display);margin:0}
-h1 span{background:linear-gradient(transparent 55%,var(--marker) 55%);padding:0 .15em}
-header p{margin:0;color:var(--muted);max-width:52ch}
-h2{font:600 .78rem/1 var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px}
+body{margin:0;color:var(--ink);font:16px/1.6 var(--body);background:var(--paper) radial-gradient(var(--dot) 1.5px,transparent 1.6px) 0 0/22px 22px}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 72px;display:flex;flex-direction:column;gap:26px}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.brand{display:flex;align-items:center;gap:12px}
+.mascot{width:58px;height:58px;flex:none}
+.mascot .eye{transform-origin:center;transform-box:fill-box;animation:blink 5s infinite}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+h1{font:600 2.3rem/1 var(--display);margin:0;letter-spacing:.01em}
+h1 span{background:linear-gradient(transparent 58%,var(--marker) 58%);padding:0 .12em;border-radius:4px}
+header p{margin:0;color:var(--muted);max-width:50ch;font-weight:600}
+h2{display:inline-flex;align-items:center;gap:8px;font:600 1rem/1 var(--display);margin:0 0 14px;padding:7px 14px;border-radius:999px;background:var(--card);border:2px solid var(--line);transform:rotate(-1.5deg)}
+.card{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 5px 0 var(--edge);min-width:0}
+.note-pink{background:var(--pink)} .note-mint{background:var(--mint)} .note-lav{background:var(--lav)}
+.note-butter{background:var(--butter)}
+.note-pink,.note-mint,.note-lav,.note-butter{border-color:transparent}
+.sug{list-style:none;padding:0}
+.sug li{padding-left:1.5em;position:relative}
+.sug li:not(.empty)::before{content:"\2726";position:absolute;left:0;color:var(--action)}
+.sug q{display:block;font-size:.9rem;color:var(--muted);font-weight:600}
 .capture{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-button,.filebtn{font:600 .95rem var(--body);border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 16px;border-radius:8px;cursor:pointer}
+button,.filebtn{font:600 1rem var(--display);border:2px solid var(--line);background:var(--card);color:var(--ink);padding:10px 18px;border-radius:999px;cursor:pointer;box-shadow:0 3px 0 var(--edge);transition:transform .08s,box-shadow .08s}
 button:hover,.filebtn:hover{border-color:var(--action)}
-button:focus-visible,.filebtn:focus-within,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--action);outline-offset:2px}
-button.primary{background:var(--action);color:var(--action-ink);border-color:var(--action)}
-button.rec.on{background:var(--bad);border-color:var(--bad);color:#fff}
-button:disabled{opacity:.5;cursor:not-allowed}
+button:active:not(:disabled),.filebtn:active{transform:translateY(3px);box-shadow:0 0 0 var(--edge)}
+button:focus-visible,.filebtn:focus-within,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--action);outline-offset:2px}
+button.primary,button.rec{background:var(--action);color:var(--action-ink);border-color:var(--action);box-shadow:0 3px 0 var(--action-edge)}
+button.rec.on{background:var(--bad);border-color:var(--bad);color:#fff;animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.75}}
+button:disabled{opacity:.45;cursor:not-allowed}
+.filebtn{background:var(--butter)}
 .filebtn input{position:absolute;opacity:0;width:1px;height:1px}
-.timer{font:500 1rem var(--mono);font-variant-numeric:tabular-nums;color:var(--muted)}
-.settings{display:flex;flex-wrap:wrap;gap:12px 20px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
-.settings label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--muted);min-width:0}
-select,input[type=text],input[type=password],textarea{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:7px 9px;max-width:100%}
+.timer{font:600 1rem var(--mono);font-variant-numeric:tabular-nums;color:var(--bad)}
+.settings{display:flex;flex-wrap:wrap;gap:12px 20px;margin-top:18px;padding-top:18px;border-top:2px dashed var(--line)}
+.settings label{display:flex;flex-direction:column;gap:5px;font-size:.84rem;font-weight:700;color:var(--muted);min-width:0}
+select,input[type=text],input[type=password],textarea{font:inherit;font-weight:600;color:var(--ink);background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:8px 12px;max-width:100%}
 textarea{width:100%;min-height:110px;resize:vertical}
-details{margin-top:14px}
-summary{cursor:pointer;color:var(--muted);font-size:.9rem}
-#status{min-height:1.5em;color:var(--muted);font-size:.92rem;margin-top:12px}
+details{margin-top:16px}
+summary{cursor:pointer;color:var(--muted);font-size:.92rem;font-weight:700}
+#status{min-height:1.5em;color:var(--muted);font-size:.95rem;font-weight:600;margin-top:14px}
 #status.err{color:var(--bad)}
-progress{width:100%;height:6px;margin-top:6px}
-.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;align-items:start}
+progress{width:100%;height:12px;margin-top:8px;border:0;border-radius:999px;overflow:hidden;background:var(--line);accent-color:var(--action)}
+progress::-webkit-progress-bar{background:var(--line)}
+progress::-webkit-progress-value{background:var(--action);border-radius:999px}
+progress::-moz-progress-bar{background:var(--action)}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:26px;align-items:start}
 @media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
-.rail{display:flex;flex-direction:column;gap:24px}
+.rail{display:flex;flex-direction:column;gap:26px;min-width:0}
 audio{width:100%;margin-bottom:14px}
-#transcript{font:1.05rem/1.75 var(--display);overflow-wrap:anywhere}
-.seg{cursor:pointer;border-radius:3px}
-.seg:hover{background:color-mix(in srgb,var(--action) 14%,transparent)}
-.seg.now{text-decoration:underline;text-decoration-color:var(--action);text-underline-offset:4px}
-.ts{font:.72rem var(--mono);color:var(--muted);margin-right:4px;user-select:none}
-mark{background:var(--marker);color:var(--marker-ink);padding:.08em .1em;border-radius:2px}
-ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px}
+#transcript{font-size:1.06rem;line-height:1.85;overflow-wrap:anywhere}
+.seg{cursor:pointer;border-radius:6px}
+.seg:hover{background:var(--lav)}
+.seg.now{text-decoration:underline wavy var(--action);text-underline-offset:5px}
+.ts{font:600 .7rem var(--mono);color:var(--muted);background:var(--paper);border-radius:999px;padding:2px 7px;margin-right:5px;user-select:none}
+mark{background:var(--marker);color:var(--marker-ink);padding:.1em .2em;border-radius:6px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:9px}
+#notes li::marker{content:"✿  ";color:var(--action)}
+#notes li.empty::marker{content:""}
 #summary{margin:0}
 .todos{list-style:none;padding:0}
 .todos label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
-.todos input{margin-top:.35em;width:1rem;height:1rem;flex:none}
+.todos input{margin-top:.3em;width:1.15rem;height:1.15rem;flex:none;accent-color:var(--action)}
 .todos input:checked+span{text-decoration:line-through;color:var(--muted)}
-.meta{display:block;font-size:.8rem;color:var(--muted)}
+.meta{display:block;font-size:.82rem;color:var(--muted);font-weight:700}
 .empty{color:var(--muted);font-style:italic}
 .row{display:flex;flex-wrap:wrap;gap:10px}
-.badge{font:.72rem var(--mono);border:1px solid var(--line);border-radius:99px;padding:2px 8px;color:var(--muted)}
+.row button{font-size:.9rem;padding:8px 14px}
+.badge{font:600 .7rem var(--mono);background:var(--butter);border-radius:999px;padding:3px 9px;color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.mascot .eye,button.rec.on{animation:none}button,.filebtn{transition:none}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1><span>Earmark</span></h1>
-    <p>Record or upload audio. Get a transcript with the important lines highlighted, a summary, key notes and a to-do list.</p>
+    <div class="brand">
+      <svg class="mascot" viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M14 8h26l12 12v32a6 6 0 0 1-6 6H14a6 6 0 0 1-6-6V14a6 6 0 0 1 6-6z" fill="var(--card)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M40 8v8a4 4 0 0 0 4 4h8z" fill="var(--marker)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+        <ellipse class="eye" cx="22" cy="34" rx="3" ry="3.6" fill="var(--ink)"/>
+        <ellipse class="eye" cx="38" cy="34" rx="3" ry="3.6" fill="var(--ink)"/>
+        <path d="M25 42q5 5 10 0" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="16" cy="41" r="3.2" fill="var(--action)" opacity=".45"/>
+        <circle cx="44" cy="41" r="3.2" fill="var(--action)" opacity=".45"/>
+      </svg>
+      <h1><span>Earmark</span></h1>
+    </div>
+    <p>Record or upload audio, and I'll write it down, highlight the good bits, and make your notes and to-do list.</p>
   </header>
 
   <section class="card">
@@ -115,12 +150,13 @@ ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px}
     <section class="card">
       <h2>Transcript <span class="badge" id="engine" hidden></span></h2>
       <audio id="player" controls hidden></audio>
-      <div id="transcript"><p class="empty">Your transcript appears here. Highlighted lines are the ones worth remembering; click any line to jump to that moment in the audio.</p></div>
+      <div id="transcript"><p class="empty">Your transcript appears here. Highlighted lines are the ones worth remembering; tap any line to jump to that moment in the audio.</p></div>
     </section>
     <div class="rail">
-      <section class="card"><h2>Summary</h2><p id="summary" class="empty">Nothing yet.</p></section>
-      <section class="card"><h2>Key notes</h2><ul id="notes"><li class="empty">Nothing yet.</li></ul></section>
-      <section class="card"><h2>To-do list</h2><ul id="todos" class="todos"><li class="empty">Nothing yet.</li></ul></section>
+      <section class="card note-pink"><h2>Summary</h2><p id="summary" class="empty">Nothing yet.</p></section>
+      <section class="card note-mint"><h2>Key notes</h2><ul id="notes"><li class="empty">Nothing yet.</li></ul></section>
+      <section class="card note-lav"><h2>To-do list</h2><ul id="todos" class="todos"><li class="empty">Nothing yet.</li></ul></section>
+      <section class="card note-butter"><h2>Suggestions <span class="badge" id="sugBy" hidden></span></h2><ul id="suggestions" class="sug"><li class="empty">Nothing yet.</li></ul></section>
       <div class="row">
         <button id="copy" disabled>Copy as Markdown</button>
         <button id="save" disabled>Download .md</button>
@@ -235,32 +271,33 @@ async function handleAudio(blob, name) {
   $('player').src = URL.createObjectURL(blob); $('player').hidden = false;
   try {
     setStatus('Reading audio…');
-    const mins = (await mediaDuration()) / 60;
-    const needMB = blob.size / 1048576 + mins * 15.3, capMB = SMALL_DEVICE ? 600 : 2500;
-    if (mins && needMB > capMB) {
-      const okMins = Math.floor(capMB / (needMB / mins) / 5) * 5;
-      throw new Error('this recording is ' + Math.round(mins) + ' minutes long, which needs more memory than this device gives a web page. Split it into parts of about ' + okMins + ' minutes or less and transcribe them one at a time.');
-    }
-    const audio = await decode(blob);
-    if (audio.length < 16000 * 0.5) throw new Error('The audio is too short to transcribe.');
+    const src = await audioSource(blob);
+    if (src.total < 0.5) throw new Error('The audio is too short to transcribe.');
     setStatus('Loading the speech model (downloaded once, then cached)…');
     try { if (navigator.wakeLock) wake = await navigator.wakeLock.request('screen'); } catch (e) {}
     state.chunks = []; state.analysis = null;
-    let pos = 0;
-    while (pos < audio.length) {
-      const end = cutPoint(audio, pos), piece = audio.slice(pos, end), off = pos / 16000;
-      let energy = 0;
-      for (let i = 0; i < piece.length; i += 8) energy += piece[i] * piece[i];
-      if (Math.sqrt(energy / (piece.length / 8)) > 0.002) {
-        const out = await transcribe(piece);
-        const got = (out.chunks || []).filter((c) => c.text && c.text.trim());
-        if (got.length) got.forEach((c) => state.chunks.push({ start: off + ((c.timestamp && c.timestamp[0]) || 0), text: c.text }));
-        else if (out.text && out.text.trim()) state.chunks.push({ start: off, text: out.text });
-        render('transcribing…');
+    let carry = new Float32Array(0), seg;
+    while ((seg = await src.next())) {
+      let audio = seg.audio, base = seg.start;
+      if (carry.length) { const joined = new Float32Array(carry.length + audio.length); joined.set(carry); joined.set(audio, carry.length); audio = joined; base -= carry.length / 16000; }
+      let pos = 0;
+      while (pos < audio.length && (seg.last || audio.length - pos >= 480000)) {
+        const end = cutPoint(audio, pos), piece = audio.slice(pos, end), off = base + pos / 16000;
+        let energy = 0;
+        for (let i = 0; i < piece.length; i += 8) energy += piece[i] * piece[i];
+        if (piece.length > 1600 && Math.sqrt(energy / (piece.length / 8)) > 0.002) {
+          const out = await transcribe(piece);
+          const got = (out.chunks || []).filter((c) => c.text && c.text.trim());
+          if (got.length) got.forEach((c) => state.chunks.push({ start: off + ((c.timestamp && c.timestamp[0]) || 0), text: c.text }));
+          else if (out.text && out.text.trim()) state.chunks.push({ start: off, text: out.text });
+          render('transcribing…');
+        }
+        pos = end;
+        const at = Math.min(src.total, base + pos / 16000);
+        $('bar').hidden = false; $('bar').value = 100 * at / src.total;
+        setStatus('Transcribing… ' + Math.round(100 * at / src.total) + '% done (' + fmt(at) + ' of ' + fmt(src.total) + '). Keep this tab open and in front.');
       }
-      pos = end;
-      $('bar').hidden = false; $('bar').value = 100 * pos / audio.length;
-      setStatus('Transcribing… ' + Math.round(100 * pos / audio.length) + '% done (' + fmt(pos / 16000) + ' of ' + fmt(audio.length / 16000) + '). Keep this tab open and in front.');
+      carry = seg.last ? new Float32Array(0) : audio.slice(pos);
     }
     if (!state.chunks.length) throw new Error('No speech was detected.');
     await analyze();
@@ -272,6 +309,147 @@ async function handleAudio(blob, name) {
   busy(false);
 }
 let wake = null;
+
+/* Where the audio comes from: m4a/mp4 files are read five minutes at a time; anything else is opened whole, if it fits. */
+async function audioSource(blob) {
+  let plan = null;
+  try { plan = await mp4Plan(blob); } catch (e) {}
+  if (plan && plan.segments.length) {
+    try {
+      let first = await decode(new Blob([await plan.segments[0].read()])), i = 0;
+      return { total: plan.duration, next: async () => {
+        if (i >= plan.segments.length) return null;
+        const s = plan.segments[i], audio = first || await decode(new Blob([await s.read()]));
+        first = null; i++;
+        return { audio, start: s.start, last: i === plan.segments.length };
+      } };
+    } catch (e) {}
+  }
+  const mins = (await mediaDuration()) / 60;
+  const needMB = blob.size / 1048576 + mins * 15.3, capMB = SMALL_DEVICE ? 600 : 2500;
+  if (mins && needMB > capMB) {
+    const okMins = Math.floor(capMB / (needMB / mins) / 5) * 5;
+    throw new Error('this recording is ' + Math.round(mins) + ' minutes long and is in a format that has to be opened all at once, which needs more memory than this device gives a web page. Split it into parts of about ' + okMins + ' minutes or less, or use an .m4a recording, which has no length limit here.');
+  }
+  let audio = await decode(blob);
+  return { total: audio.length / 16000, next: async () => { const a = audio; audio = null; return a ? { audio: a, start: 0, last: true } : null; } };
+}
+
+/* ---------- long recordings: read an m4a/mp4 in short self-contained slices, so the whole file is never in memory ---------- */
+async function mp4Plan(blob, sliceSeconds) {
+  sliceSeconds = sliceSeconds || 300;
+  const readAt = async (off, len) => new Uint8Array(await blob.slice(off, off + len).arrayBuffer());
+  const u32 = (b, o) => b[o] * 16777216 + (b[o + 1] << 16) + (b[o + 2] << 8) + b[o + 3];
+  const u64 = (b, o) => u32(b, o) * 4294967296 + u32(b, o + 4);
+  const typ = (b, o) => String.fromCharCode(b[o], b[o + 1], b[o + 2], b[o + 3]);
+  const w32 = (b, o, v) => { b[o] = (v / 16777216) & 255; b[o + 1] = (v >>> 16) & 255; b[o + 2] = (v >>> 8) & 255; b[o + 3] = v & 255; };
+  const w64 = (b, o, v) => { w32(b, o, Math.floor(v / 4294967296)); w32(b, o + 4, v % 4294967296); };
+  const cat = (parts) => { const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0)); let o = 0; parts.forEach((p) => { out.set(p, o); o += p.length; }); return out; };
+  const box = (type, parts) => { const body = cat(parts), out = new Uint8Array(8 + body.length); w32(out, 0, out.length); for (let i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i); out.set(body, 8); return out; };
+  const kids = (b, s, e) => { const out = []; while (s + 8 <= e) { let size = u32(b, s), hdr = 8; if (size === 1) { size = u64(b, s + 8); hdr = 16; } else if (size === 0) size = e - s; if (size < hdr || s + size > e) break; out.push({ type: typ(b, s + 4), start: s, end: s + size, body: s + hdr }); s += size; } return out; };
+  const pick = (list, type) => list.find((k) => k.type === type);
+
+  // top-level boxes: find ftyp and moov without reading the audio data
+  let off = 0, ftyp = null, moov = null;
+  while (off + 8 <= blob.size) {
+    const h = await readAt(off, 16);
+    let size = u32(h, 0), hdr = 8;
+    if (size === 1) { size = u64(h, 8); hdr = 16; } else if (size === 0) size = blob.size - off;
+    const t = typ(h, 4);
+    if (size < hdr || !/^[\x20-\x7e]{4}$/.test(t)) return null;
+    if (t === 'ftyp' && size < 4096) ftyp = await readAt(off, size);
+    if (t === 'moov') { if (size > 96e6) return null; moov = await readAt(off, size); }
+    off += size;
+  }
+  if (!moov) return null;
+  if (!ftyp) ftyp = box('ftyp', [new Uint8Array([77, 52, 65, 32, 0, 0, 0, 0, 77, 52, 65, 32, 105, 115, 111, 109])]);
+
+  const top = kids(moov, 8, moov.length), mvhd = pick(top, 'mvhd');
+  let trak = null, mdia, mdiaKids;
+  for (const t of top.filter((k) => k.type === 'trak')) {
+    const m = pick(kids(moov, t.body, t.end), 'mdia'); if (!m) continue;
+    const mk = kids(moov, m.body, m.end), hd = pick(mk, 'hdlr');
+    if (hd && typ(moov, hd.body + 8) === 'soun') { trak = t; mdia = m; mdiaKids = mk; break; }
+  }
+  if (!mvhd || !trak) return null;
+  const tkhd = pick(kids(moov, trak.body, trak.end), 'tkhd'), mdhd = pick(mdiaKids, 'mdhd'), hdlr = pick(mdiaKids, 'hdlr'), minf = pick(mdiaKids, 'minf');
+  if (!tkhd || !mdhd || !minf) return null;
+  const minfKids = kids(moov, minf.body, minf.end), stbl = pick(minfKids, 'stbl');
+  if (!stbl) return null;
+  const sk = kids(moov, stbl.body, stbl.end);
+  const stsd = pick(sk, 'stsd'), stts = pick(sk, 'stts'), stsc = pick(sk, 'stsc'), stsz = pick(sk, 'stsz'), stco = pick(sk, 'stco'), co64 = pick(sk, 'co64');
+  if (!stsd || !stts || !stsc || !stsz || !(stco || co64)) return null;
+  const mdts = moov[mdhd.body] === 1 ? u32(moov, mdhd.body + 20) : u32(moov, mdhd.body + 12);
+  const mvts = moov[mvhd.body] === 1 ? u32(moov, mvhd.body + 20) : u32(moov, mvhd.body + 12);
+  if (!mdts || !mvts) return null;
+
+  // per-sample size, file offset and start time
+  const n = u32(moov, stsz.body + 8), fixed = u32(moov, stsz.body + 4);
+  if (!n) return null;
+  const sizeOf = (i) => fixed || u32(moov, stsz.body + 12 + 4 * i);
+  const offs = new Float64Array(n), times = new Float64Array(n + 1);
+  const chunkCount = u32(moov, (stco || co64).body + 4);
+  const chunkOff = (c) => (stco ? u32(moov, stco.body + 8 + 4 * c) : u64(moov, co64.body + 8 + 8 * c));
+  const scCount = u32(moov, stsc.body + 4);
+  let si = 0;
+  for (let e = 0; e < scCount && si < n; e++) {
+    const first = u32(moov, stsc.body + 8 + 12 * e), per = u32(moov, stsc.body + 12 + 12 * e);
+    const nextFirst = e + 1 < scCount ? u32(moov, stsc.body + 8 + 12 * (e + 1)) : chunkCount + 1;
+    for (let c = first; c < nextFirst && si < n; c++) {
+      let o = chunkOff(c - 1);
+      for (let k = 0; k < per && si < n; k++) { offs[si] = o; o += sizeOf(si); si++; }
+    }
+  }
+  if (si !== n) return null;
+  const ttCount = u32(moov, stts.body + 4);
+  let ti = 0, t = 0;
+  for (let e = 0; e < ttCount; e++) {
+    const cnt = u32(moov, stts.body + 8 + 8 * e), delta = u32(moov, stts.body + 12 + 8 * e);
+    for (let k = 0; k < cnt && ti < n; k++) { times[ti++] = t; t += delta; }
+  }
+  if (ti !== n) return null;
+  times[n] = t;
+
+  const copyWithDuration = (b, dur) => {
+    const c = moov.slice(b.start, b.end), body = b.body - b.start, v1 = c[body] === 1;
+    if (b.type === 'tkhd') { if (v1) w64(c, body + 28, dur); else w32(c, body + 20, dur); }
+    else if (v1) w64(c, body + 24, dur); else w32(c, body + 16, dur);
+    return c;
+  };
+  const full = (type, bytes) => box(type, [new Uint8Array(4), bytes]);
+  const table = (nums) => { const b = new Uint8Array(4 * nums.length); nums.forEach((v, i) => w32(b, 4 * i, v)); return b; };
+  const buildMoov = (a, b, dataOffset) => {
+    const runs = [];
+    for (let i = a; i < b; i++) { const d = times[i + 1] - times[i]; if (runs.length && runs[runs.length - 1][1] === d) runs[runs.length - 1][0]++; else runs.push([1, d]); }
+    const sizes = [0, b - a]; for (let i = a; i < b; i++) sizes.push(sizeOf(i));
+    const dur = times[b] - times[a];
+    const newStbl = box('stbl', [moov.subarray(stsd.start, stsd.end),
+      full('stts', table([runs.length].concat(...runs))), full('stsc', table([1, 1, b - a, 1])),
+      full('stsz', table(sizes)), full('stco', table([1, dataOffset]))]);
+    const newMinf = box('minf', minfKids.filter((k) => k.type !== 'stbl').map((k) => moov.subarray(k.start, k.end)).concat([newStbl]));
+    const newMdia = box('mdia', [copyWithDuration(mdhd, dur), moov.subarray(hdlr.start, hdlr.end), newMinf]);
+    const movieDur = Math.round(dur * mvts / mdts);
+    return box('moov', [copyWithDuration(mvhd, movieDur), box('trak', [copyWithDuration(tkhd, movieDur), newMdia])]);
+  };
+  const readSlice = async (a, b) => {
+    const parts = []; let total = 0, runStart = offs[a], runEnd = offs[a];
+    for (let i = a; i < b; i++) {
+      if (offs[i] !== runEnd) { parts.push(await readAt(runStart, runEnd - runStart)); runStart = offs[i]; runEnd = offs[i]; }
+      runEnd += sizeOf(i); total += sizeOf(i);
+    }
+    parts.push(await readAt(runStart, runEnd - runStart));
+    const probe = buildMoov(a, b, 0), head = new Uint8Array(8);
+    w32(head, 0, 8 + total); head.set([109, 100, 97, 116], 4);
+    return cat([ftyp, buildMoov(a, b, ftyp.length + probe.length + 8), head].concat(parts));
+  };
+
+  const segments = []; let a = 0;
+  for (let i = 1; i <= n; i++) {
+    if (i === n || times[i] - times[a] >= sliceSeconds * mdts) { const s = a, e = i; segments.push({ start: times[s] / mdts, read: () => readSlice(s, e) }); a = i; }
+  }
+  return { duration: times[n] / mdts, segments };
+}
+
 function mediaDuration() {
   return new Promise((resolve) => {
     const a = $('player'), done = () => resolve(isFinite(a.duration) ? a.duration : 0);
@@ -359,8 +537,8 @@ async function claudeNotes(text, key) {
   const prompt = 'Below is a transcript of spoken audio. Reply with JSON only, no prose, in this shape:\n' +
     '{"summary": "3-5 sentence summary", "key_notes": ["short factual note", ...], ' +
     '"todos": [{"task": "imperative action", "owner": "name or empty", "due": "date/time mentioned or empty"}], ' +
-    '"highlights": ["exact quote copied word for word from the transcript", ...]}\n' +
-    'Give 4-8 key notes, every real action item as a todo (empty list if none), and 3-7 highlights, each a short verbatim span (under 30 words) of the most important moments. Write in the transcript\'s language.\n\n<transcript>\n' + text + '\n</transcript>';
+    '"highlights": ["exact quote copied word for word from the transcript", ...], "suggestions": ["one practical suggestion", ...]}\n' +
+    'Give 4-8 key notes, every real action item as a todo (empty list if none), and 3-7 highlights, each a short verbatim span (under 30 words) of the most important moments. Give 3-6 suggestions the listener would find useful: follow-ups nobody owns, unclear or conflicting points to confirm, questions to ask next, risks, or sensible next steps. Write in the transcript\'s language.\n\n<transcript>\n' + text + '\n</transcript>';
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
@@ -374,7 +552,9 @@ async function claudeNotes(text, key) {
     summary: String(j.summary || ''),
     notes: (j.key_notes || []).map(String),
     todos: (j.todos || []).map((t) => (typeof t === 'string' ? { task: t } : { task: String(t.task || ''), owner: t.owner || '', due: t.due || '' })).filter((t) => t.task),
-    highlights: (j.highlights || []).map(String)
+    highlights: (j.highlights || []).map(String),
+    suggestions: (j.suggestions || []).map((x) => ({ tip: String(x) })),
+    sugBy: (j.suggestions || []).length ? 'by Claude' : ''
   };
 }
 
@@ -394,6 +574,37 @@ function localNotes(text) {
   return { summary: pick(0, nSum).join(' '), notes: pick(nSum, Math.min(6, Math.max(0, sents.length - nSum))), todos, highlights: pick(0, Math.min(5, Math.max(1, Math.round(sents.length / 5)))) };
 }
 
+/* ---------- suggestions without AI: fixed tips triggered by patterns in the words ---------- */
+const WHEN = /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday|today|tonight|tomorrow|next (week|month|year)|this (week|month|afternoon|evening)|end of (the )?(day|week|month|year)|january|february|march|april|june|july|august|september|october|november|december|\d{1,2}(st|nd|rd|th)|\d{1,2}[\/.]\d{1,2}|(tenth|eleventh|twelfth|thirteenth|fourteenth|fifteenth|sixteenth|seventeenth|eighteenth|nineteenth|twentieth|thirtieth)|in (a|two|three|four|five|\d+) (days?|weeks?|months?))\b/i;
+const UNSURE = /\b(not sure|don't know|do not know|no idea|maybe|perhaps|probably|i guess|we'll see|to be decided|tbd|unclear|figure (it |that |this )?out|look into|find out|not certain|depends on)\b/i;
+const FIGURE = /(\$\s?\d|\d[\d,.]*\s?(%|percent|dollars|euros|pounds|thousand|million|billion)|\b(hundred|thousand|million|billion)\b|\bpercent\b)/i;
+const DECIDED = /\b(we decided|we've decided|we agreed|we've agreed|agreed to|the plan is|the decision is|we're going with|we will go with|we are going with|final decision)\b/i;
+const VAGUE_OWNER = /^(we|let's|someone|somebody|somebody's|it)\b|\b(we should|we need|we have to|we must|someone should|somebody should|needs to be)\b/i;
+const NOT_NAMES = new Set('Monday Tuesday Wednesday Thursday Friday Saturday Sunday January February March April May June July August September October November December The This That These Those And But Let Okay Yes Well Also Then There Here What When Where Why How Next Remember Thanks Thank Open Please God English Spanish French German Zoom Google Slack Teams Christmas Easter'.split(' '));
+function suggest(text, a) {
+  const sents = text.replace(/\s+/g, ' ').split(/(?<=[.!?。？！])\s+/).map((x) => x.trim()).filter((x) => x.split(' ').length >= 3);
+  const q = (x) => (x.length > 150 ? x.slice(0, 147).trim() + '…' : x), out = [];
+  const add = (tip, quote) => { if (out.length < 9) out.push(quote ? { tip, quote: q(quote) } : { tip }); };
+  const todos = (a && a.todos) || [];
+  if (!todos.length && sents.length > 5) add('No action items were detected. If something needs to happen next, write down who will do it and by when.');
+  todos.filter((t) => !t.owner && VAGUE_OWNER.test(t.task)).slice(0, 2).forEach((t) => add('No specific person owns this. Decide who will do it.', t.task));
+  const undated = todos.filter((t) => !t.due && !WHEN.test(t.task));
+  if (undated.length) add(undated.length === 1 ? 'This to-do has no deadline. Give it a date.' : undated.length + ' to-dos have no deadline. Give each a date, starting with this one.', undated[0].task);
+  sents.filter((x) => /[?？]$/.test(x)).slice(0, 2).forEach((x) => add('A question was asked. Check that it got an answer.', x));
+  sents.filter((x) => UNSURE.test(x) && !/[?？]$/.test(x)).slice(0, 2).forEach((x) => add('This sounded undecided. Confirm it before acting on it.', x));
+  sents.filter((x) => DECIDED.test(x)).slice(0, 2).forEach((x) => add('A decision was made. Confirm it in writing with everyone involved.', x));
+  const due = /\b(by|on|before|until|due|deadline|no later than)\b/i;
+  const dated = sents.filter((x) => WHEN.test(x)).sort((x, y) => due.test(y) - due.test(x));
+  if (dated.length) add(dated.length === 1 ? 'A date was mentioned. Put it in your calendar.' : dated.length + ' lines mention dates or deadlines. Put them in your calendar, starting with this one.', dated[0]);
+  const fig = sents.filter((x) => FIGURE.test(x));
+  if (fig.length) add('Numbers were quoted. Double-check them against the source before you share these notes.', fig[0]);
+  const names = {};
+  sents.forEach((x) => (x.match(/(?<=[a-z,;] )[A-Z][a-z]{2,}\b/g) || []).concat((x.match(/^[A-Z][a-z]{2,}(?=,| will| needs| should| has| is going)/) || [])).forEach((n) => { if (!NOT_NAMES.has(n)) names[n] = (names[n] || 0) + 1; }));
+  const people = Object.keys(names).sort((x, y) => names[y] - names[x]).slice(0, 6);
+  if (people.length) add('Names mentioned: ' + people.join(', ') + '. Consider sending them these notes.');
+  return out;
+}
+
 /* ---------- render ---------- */
 function highlightRanges(text) {
   const low = text.toLowerCase(), ranges = [];
@@ -410,6 +621,7 @@ function highlightRanges(text) {
   return merged;
 }
 function render(engine) {
+  if (state.analysis && !(state.analysis.suggestions && state.analysis.sugBy === 'by Claude')) { state.analysis.suggestions = suggest(fullText(), state.analysis); state.analysis.sugBy = 'from word patterns, not AI'; }
   const box = $('transcript'); box.textContent = '';
   const texts = state.chunks.map((c) => c.text.trim());
   const ranges = highlightRanges(texts.join(' '));
@@ -440,6 +652,12 @@ function render(engine) {
     if (meta) { const m = document.createElement('span'); m.className = 'meta'; m.textContent = meta; span.appendChild(m); }
     label.append(cb, span); li.appendChild(label);
   });
+  const sug = a.suggestions || [];
+  fillList($('suggestions'), sug, state.chunks.length && state.analysis ? 'No suggestions for this one.' : 'Nothing yet.', (li, x) => {
+    li.textContent = x.tip;
+    if (x.quote) { const qq = document.createElement('q'); qq.textContent = x.quote; li.appendChild(qq); }
+  });
+  $('sugBy').textContent = a.sugBy || ''; $('sugBy').hidden = !a.sugBy;
   $('engine').textContent = engine; $('engine').hidden = false;
   ['copy', 'save', 'saveDocx', 'savePdf', 'redo'].forEach((id) => { $(id).disabled = false; });
 }
@@ -465,6 +683,8 @@ function markdown() {
   a.notes.forEach((n) => L.push('- ' + n));
   L.push('', '## To-do');
   a.todos.forEach((t) => L.push('- [' + (t.done ? 'x' : ' ') + '] ' + t.task + (t.owner ? ' (' + t.owner + ')' : '') + (t.due ? ' — due ' + t.due : '')));
+  L.push('', '## Suggestions');
+  (a.suggestions || []).forEach((x) => L.push('- ' + x.tip + (x.quote ? ' ("' + x.quote + '")' : '')));
   L.push('', '## Highlights');
   a.highlights.forEach((h) => L.push('> ' + h, ''));
   L.push('## Transcript', '');
@@ -510,6 +730,10 @@ function buildDocx(d) {
   body.push(h('To-do list'));
   if (!d.a.todos.length) body.push(para(run('No action items.')));
   d.a.todos.forEach((t) => body.push(para(run((t.done ? '☑' : '☐') + '\t' + t.task) + ((t.owner || t.due) ? run('  (' + [t.owner, t.due && 'due ' + t.due].filter(Boolean).join(', ') + ')', { color: '5D6B78' }) : ''), 80, true)));
+  if ((d.a.suggestions || []).length) {
+    body.push(h('Suggestions'));
+    d.a.suggestions.forEach((x) => body.push(para(run('\u2726\t' + x.tip) + (x.quote ? run('  \u201C' + x.quote + '\u201D', { color: '5D6B78' }) : ''), 80, true)));
+  }
   body.push(h('Highlighted transcript'));
   d.transcript.forEach((c) => body.push(para((c.time ? run('[' + c.time + ']  ', { color: '5D6B78', sz: 18 }) : '') + c.parts.map((p) => run(p.text, { hl: p.hl })).join(''))));
   const doc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' + body.join('') + '<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>';
@@ -575,6 +799,7 @@ function buildPdf(d) {
   h('Key notes'); (d.a.notes.length ? d.a.notes : ['None.']).forEach((n) => write('-  ' + n, { indent: 8, after: 3 }));
   h('To-do list'); if (!d.a.todos.length) write('No action items.');
   d.a.todos.forEach((t) => write((t.done ? '[x]  ' : '[  ]  ') + t.task + ((t.owner || t.due) ? '  (' + [t.owner, t.due && 'due ' + t.due].filter(Boolean).join(', ') + ')' : ''), { indent: 8, after: 3 }));
+  if ((d.a.suggestions || []).length) { h('Suggestions'); d.a.suggestions.forEach((x) => write('-  ' + x.tip + (x.quote ? '  "' + x.quote + '"' : ''), { indent: 8, after: 3 })); }
   h('Highlights'); if (!d.a.highlights.length) write('None.');
   d.a.highlights.forEach((q) => write('"' + q.replace(/^["“]+|["”]+$/g, '') + '"', { indent: 8, after: 5 }));
   h('Transcript');
