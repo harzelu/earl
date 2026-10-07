@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Earmark</title>
+<style>
+/* Layout: one narrow capture column on top, then transcript (wide) beside a notes rail. Highlighter yellow is the only loud color. */
+:root{
+  --paper:#f6f7f4; --card:#ffffff; --ink:#17212b; --muted:#5d6b78; --line:#d9dedb;
+  --marker:#ffe45c; --marker-ink:#3a3000; --action:#1f5fbf; --action-ink:#ffffff; --bad:#b3261e;
+  --display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --body:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --paper:#12171c; --card:#1a2128; --ink:#e8ecef; --muted:#97a4b0; --line:#2c363f;
+  --marker:#d9b92e; --marker-ink:#1a1500; --action:#7fb0ff; --action-ink:#0b1622; --bad:#ff8a80;
+  color-scheme:dark;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--body)}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 64px;display:flex;flex-direction:column;gap:24px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;justify-content:space-between}
+h1{font:600 2rem/1.1 var(--display);margin:0}
+h1 span{background:linear-gradient(transparent 55%,var(--marker) 55%);padding:0 .15em}
+header p{margin:0;color:var(--muted);max-width:52ch}
+h2{font:600 .78rem/1 var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px}
+.capture{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+button,.filebtn{font:600 .95rem var(--body);border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 16px;border-radius:8px;cursor:pointer}
+button:hover,.filebtn:hover{border-color:var(--action)}
+button:focus-visible,.filebtn:focus-within,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--action);outline-offset:2px}
+button.primary{background:var(--action);color:var(--action-ink);border-color:var(--action)}
+button.rec.on{background:var(--bad);border-color:var(--bad);color:#fff}
+button:disabled{opacity:.5;cursor:not-allowed}
+.filebtn input{position:absolute;opacity:0;width:1px;height:1px}
+.timer{font:500 1rem var(--mono);font-variant-numeric:tabular-nums;color:var(--muted)}
+.settings{display:flex;flex-wrap:wrap;gap:12px 20px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.settings label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--muted);min-width:0}
+select,input[type=text],input[type=password],textarea{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:7px 9px;max-width:100%}
+textarea{width:100%;min-height:110px;resize:vertical}
+details{margin-top:14px}
+summary{cursor:pointer;color:var(--muted);font-size:.9rem}
+#status{min-height:1.5em;color:var(--muted);font-size:.92rem;margin-top:12px}
+#status.err{color:var(--bad)}
+progress{width:100%;height:6px;margin-top:6px}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+.rail{display:flex;flex-direction:column;gap:24px}
+audio{width:100%;margin-bottom:14px}
+#transcript{font:1.05rem/1.75 var(--display);overflow-wrap:anywhere}
+.seg{cursor:pointer;border-radius:3px}
+.seg:hover{background:color-mix(in srgb,var(--action) 14%,transparent)}
+.seg.now{text-decoration:underline;text-decoration-color:var(--action);text-underline-offset:4px}
+.ts{font:.72rem var(--mono);color:var(--muted);margin-right:4px;user-select:none}
+mark{background:var(--marker);color:var(--marker-ink);padding:.08em .1em;border-radius:2px}
+ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:8px}
+#summary{margin:0}
+.todos{list-style:none;padding:0}
+.todos label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.todos input{margin-top:.35em;width:1rem;height:1rem;flex:none}
+.todos input:checked+span{text-decoration:line-through;color:var(--muted)}
+.meta{display:block;font-size:.8rem;color:var(--muted)}
+.empty{color:var(--muted);font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+.badge{font:.72rem var(--mono);border:1px solid var(--line);border-radius:99px;padding:2px 8px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span>Earmark</span></h1>
+    <p>Record or upload audio. Get a transcript with the important lines highlighted, a summary, key notes and a to-do list.</p>
+  </header>
+
+  <section class="card">
+    <div class="capture">
+      <button id="rec" class="rec">● Record</button>
+      <span class="timer" id="timer" hidden>00:00</span>
+      <label class="filebtn">Upload audio<input id="file" type="file" accept="audio/*,video/*,.m4a,.mp3,.wav,.aac,.ogg,.oga,.opus,.flac,.webm,.mp4,.mov,.wma,.aiff,.caf,.3gp,.amr"></label>
+      <button id="sample">Try the sample</button>
+    </div>
+    <div class="settings">
+      <label>Transcription model
+        <select id="model">
+          <option value="Xenova/whisper-tiny.en">Tiny, English (fastest, ~40 MB)</option>
+          <option value="Xenova/whisper-base" selected>Base, any language (~80 MB)</option>
+          <option value="Xenova/whisper-small">Small, any language (best, ~250 MB)</option>
+        </select>
+      </label>
+      <label>Spoken language
+        <select id="lang">
+          <option value="">Auto-detect</option><option value="english">English</option><option value="spanish">Spanish</option>
+          <option value="french">French</option><option value="german">German</option><option value="portuguese">Portuguese</option>
+          <option value="hindi">Hindi</option><option value="arabic">Arabic</option><option value="swahili">Swahili</option>
+          <option value="chinese">Chinese</option><option value="japanese">Japanese</option>
+        </select>
+      </label>
+      <label>Claude API key (optional, for better notes)
+        <input id="key" type="password" placeholder="sk-ant-…" autocomplete="off">
+      </label>
+    </div>
+    <details>
+      <summary>Already have a transcript? Paste it instead</summary>
+      <textarea id="paste" placeholder="Paste text here…"></textarea>
+      <div class="row" style="margin-top:8px"><button id="usePaste" class="primary">Make notes from this text</button></div>
+    </details>
+    <div id="status" role="status"></div>
+    <progress id="bar" max="100" value="0" hidden></progress>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Transcript <span class="badge" id="engine" hidden></span></h2>
+      <audio id="player" controls hidden></audio>
+      <div id="transcript"><p class="empty">Your transcript appears here. Highlighted lines are the ones worth remembering; click any line to jump to that moment in the audio.</p></div>
+    </section>
+    <div class="rail">
+      <section class="card"><h2>Summary</h2><p id="summary" class="empty">Nothing yet.</p></section>
+      <section class="card"><h2>Key notes</h2><ul id="notes"><li class="empty">Nothing yet.</li></ul></section>
+      <section class="card"><h2>To-do list</h2><ul id="todos" class="todos"><li class="empty">Nothing yet.</li></ul></section>
+      <div class="row">
+        <button id="copy" disabled>Copy as Markdown</button>
+        <button id="save" disabled>Download .md</button>
+        <button id="redo" disabled>Redo notes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/plain" id="worker-src">
+import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.0/dist/transformers.min.js';
+let asr = null, loaded = null;
+self.onmessage = async (e) => {
+  const { audio, model, language } = e.data;
+  try {
+    if (loaded !== model) {
+      asr = await pipeline('automatic-speech-recognition', model, {
+        dtype: 'q8',
+        progress_callback: (p) => self.postMessage({ type: 'progress', p })
+      });
+      loaded = model;
+    }
+    self.postMessage({ type: 'status', text: 'Transcribing… this runs on your computer, so long recordings take a while.' });
+    const opts = { chunk_length_s: 30, stride_length_s: 5, return_timestamps: true };
+    if (!model.endsWith('.en')) { opts.task = 'transcribe'; if (language) opts.language = language; }
+    const out = await asr(audio, opts);
+    self.postMessage({ type: 'done', out });
+  } catch (err) {
+    self.postMessage({ type: 'error', message: String((err && err.message) || err) });
+  }
+};
+</script>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const state = { chunks: [], analysis: null, source: '' };
+let worker = null, recorder = null, recChunks = [], tick = null;
+
+/* ---------- small helpers ---------- */
+function setStatus(text, isErr) { $('status').textContent = text || ''; $('status').classList.toggle('err', !!isErr); }
+function fmt(s) { s = Math.max(0, Math.floor(s || 0)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
+function busy(on) { ['rec', 'file', 'sample', 'usePaste', 'redo'].forEach((id) => { if (!(on && id === 'rec' && recorder)) $(id).disabled = on; }); if (!on) $('redo').disabled = !state.chunks.length; }
+function fullText() { return state.chunks.map((c) => c.text.trim()).join(' '); }
+try { $('key').value = localStorage.getItem('earmark-key') || ''; $('model').value = localStorage.getItem('earmark-model') || $('model').value; } catch (e) {}
+$('key').addEventListener('change', () => { try { localStorage.setItem('earmark-key', $('key').value.trim()); } catch (e) {} });
+$('model').addEventListener('change', () => { try { localStorage.setItem('earmark-model', $('model').value); } catch (e) {} });
+
+/* ---------- audio in ---------- */
+$('rec').addEventListener('click', async () => {
+  if (recorder) { recorder.stop(); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recChunks = [];
+    recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = (e) => { if (e.data.size) recChunks.push(e.data); };
+    recorder.onstop = () => {
+      stream.getTracks().forEach((t) => t.stop());
+      clearInterval(tick); $('timer').hidden = true;
+      $('rec').classList.remove('on'); $('rec').textContent = '● Record';
+      const blob = new Blob(recChunks, { type: recorder.mimeType || 'audio/webm' });
+      recorder = null;
+      handleAudio(blob, 'Recording');
+    };
+    recorder.start(1000);
+    const t0 = Date.now();
+    $('timer').hidden = false; $('timer').textContent = '00:00';
+    tick = setInterval(() => { $('timer').textContent = fmt((Date.now() - t0) / 1000); }, 500);
+    $('rec').classList.add('on'); $('rec').textContent = '■ Stop and transcribe';
+    setStatus('Recording. Press stop when you are done.');
+  } catch (err) {
+    setStatus('Could not use the microphone (' + err.message + '). Allow microphone access for this page, or upload a file instead.', true);
+  }
+});
+$('file').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) handleAudio(f, f.name); e.target.value = ''; });
+
+document.addEventListener('dragover', (e) => e.preventDefault());
+document.addEventListener('drop', (e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f && !$('file').disabled) handleAudio(f, f.name); });
+
+async function decode(blob) {
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  const data = await blob.arrayBuffer();
+  let buf = null, why = '';
+  for (const opts of [{ sampleRate: 16000 }, null]) {
+    let ctx = null;
+    try { ctx = opts ? new Ctx(opts) : new Ctx(); buf = await ctx.decodeAudioData(data.slice(0)); }
+    catch (e) { why = (e && e.message) || String(e); }
+    if (ctx) { try { ctx.close(); } catch (e) {} }
+    if (buf) break;
+  }
+  if (!buf) throw new Error('this browser could not decode the audio (file type "' + (blob.type || 'unknown') + '", ' + Math.round(blob.size / 1024) + ' KB; browser said: ' + why + '). Converting the file to MP3 or WAV will work.');
+  if (buf.sampleRate !== 16000) {
+    const off = new OfflineAudioContext(1, Math.ceil(buf.duration * 16000), 16000);
+    const src = off.createBufferSource();
+    src.buffer = buf; src.connect(off.destination); src.start();
+    buf = await off.startRendering();
+  }
+  const out = new Float32Array(buf.length);
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < d.length; i++) out[i] += d[i] / buf.numberOfChannels;
+  }
+  return out;
+}
+
+async function handleAudio(blob, name) {
+  busy(true);
+  state.source = name;
+  $('player').src = URL.createObjectURL(blob); $('player').hidden = false;
+  try {
+    setStatus('Reading audio…');
+    const audio = await decode(blob);
+    if (audio.length < 16000 * 0.5) throw new Error('The audio is too short to transcribe.');
+    setStatus('Loading the speech model (downloaded once, then cached)…');
+    const out = await transcribe(audio);
+    let chunks = (out.chunks || []).filter((c) => c.text && c.text.trim());
+    if (!chunks.length && out.text) chunks = [{ timestamp: [0, null], text: out.text }];
+    if (!chunks.length) throw new Error('No speech was detected.');
+    state.chunks = chunks.map((c) => ({ start: c.timestamp ? c.timestamp[0] : null, text: c.text }));
+    await analyze();
+  } catch (err) {
+    setStatus('That did not work: ' + err.message, true);
+  }
+  $('bar').hidden = true;
+  busy(false);
+}
+
+const LIB = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.0/dist/transformers.min.js';
+let mainAsr = null, mainLoaded = null, workerBroken = false;
+function showProgress(files, p) {
+  if (p.status !== 'progress') return;
+  files[p.file] = p.progress || 0;
+  const vals = Object.values(files);
+  $('bar').hidden = false; $('bar').value = vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+async function transcribe(audio) {
+  if (!workerBroken) {
+    try { return await transcribeInWorker(audio); }
+    catch (err) { if (!err.workerFailed) throw err; workerBroken = true; worker = null; }
+  }
+  return transcribeOnPage(audio);
+}
+async function transcribeOnPage(audio) {
+  const model = $('model').value, language = $('lang').value, files = {};
+  let lib;
+  try { lib = await import(LIB); }
+  catch (e) { throw new Error('the speech engine could not be downloaded (' + e.message + '). Make sure the file is opened in a normal browser tab with internet access, not in a preview.'); }
+  if (mainLoaded !== model) {
+    mainAsr = await lib.pipeline('automatic-speech-recognition', model, { dtype: 'q8', progress_callback: (p) => showProgress(files, p) });
+    mainLoaded = model;
+  }
+  $('bar').hidden = true;
+  setStatus('Transcribing… the page may freeze while it works; leave the tab open.');
+  await new Promise((r) => setTimeout(r, 50));
+  const opts = { chunk_length_s: 30, stride_length_s: 5, return_timestamps: true };
+  if (!model.endsWith('.en')) { opts.task = 'transcribe'; if (language) opts.language = language; }
+  return mainAsr(audio, opts);
+}
+function transcribeInWorker(audio) {
+  return new Promise((resolve, reject) => {
+    if (!worker) {
+      const url = URL.createObjectURL(new Blob([$('worker-src').textContent], { type: 'text/javascript' }));
+      worker = new Worker(url, { type: 'module' });
+    }
+    const files = {};
+    worker.onerror = (e) => { e.preventDefault && e.preventDefault(); const err = new Error('worker failed'); err.workerFailed = true; reject(err); };
+    worker.onmessage = (e) => {
+      const m = e.data;
+      if (m.type === 'progress') showProgress(files, m.p);
+      else if (m.type === 'status') { $('bar').hidden = true; setStatus(m.text); }
+      else if (m.type === 'done') resolve(m.out);
+      else if (m.type === 'error') reject(new Error(m.message));
+    };
+    worker.postMessage({ audio, model: $('model').value, language: $('lang').value });
+  });
+}
+
+/* ---------- notes: Claude if a key is set, otherwise built-in ---------- */
+async function analyze() {
+  const text = fullText();
+  const key = $('key').value.trim();
+  let engine = 'built-in notes';
+  if (key) {
+    try { setStatus('Asking Claude for the summary, notes and to-dos…'); state.analysis = await claudeNotes(text, key); engine = 'notes by Claude'; }
+    catch (err) { state.analysis = localNotes(text); setStatus('Claude could not be reached (' + err.message + '), so these are the built-in notes.', true); render(engine); return; }
+  } else state.analysis = localNotes(text);
+  render(engine);
+  setStatus(key ? 'Done.' : 'Done. These notes use the simple built-in method; add a Claude API key above for much sharper ones.');
+}
+
+async function claudeNotes(text, key) {
+  const prompt = 'Below is a transcript of spoken audio. Reply with JSON only, no prose, in this shape:\n' +
+    '{"summary": "3-5 sentence summary", "key_notes": ["short factual note", ...], ' +
+    '"todos": [{"task": "imperative action", "owner": "name or empty", "due": "date/time mentioned or empty"}], ' +
+    '"highlights": ["exact quote copied word for word from the transcript", ...]}\n' +
+    'Give 4-8 key notes, every real action item as a todo (empty list if none), and 3-7 highlights, each a short verbatim span (under 30 words) of the most important moments. Write in the transcript\'s language.\n\n<transcript>\n' + text + '\n</transcript>';
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify({ model: 'claude-sonnet-5-5', max_tokens: 3000, messages: [{ role: 'user', content: prompt }] })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error((data.error && data.error.message) || ('HTTP ' + res.status));
+  const raw = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+  const j = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1));
+  return {
+    summary: String(j.summary || ''),
+    notes: (j.key_notes || []).map(String),
+    todos: (j.todos || []).map((t) => (typeof t === 'string' ? { task: t } : { task: String(t.task || ''), owner: t.owner || '', due: t.due || '' })).filter((t) => t.task),
+    highlights: (j.highlights || []).map(String)
+  };
+}
+
+const STOP = new Set('a an the and or but if so of to in on at for with from by as is are was were be been being it its this that these those i you he she we they me my your our their them his her not no yes do does did have has had will would can could should may might must just very really about into over than then there here what which who when where how why all any some up out also like um uh okay ok yeah well got get going go know think right'.split(' '));
+const ACTION = /\b(need(s)? to|have to|has to|must|should|i'll|we'll|i will|we will|you'll|let's|going to|make sure|remember to|don't forget|follow up|action item|to-?do|deadline|please (send|share|check|review|update|call|email|book|schedule)|by (monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|tonight|next week|end of))\b/i;
+function localNotes(text) {
+  const sents = text.replace(/\s+/g, ' ').split(/(?<=[.!?。？！])\s+/).map((s) => s.trim()).filter((s) => s.split(' ').length >= 4);
+  if (!sents.length) return { summary: text.trim(), notes: [], todos: [], highlights: [] };
+  const words = (s) => (s.toLowerCase().match(/[\p{L}\p{N}']+/gu) || []).filter((w) => w.length > 2 && !STOP.has(w));
+  const freq = {};
+  sents.forEach((s) => words(s).forEach((w) => { freq[w] = (freq[w] || 0) + 1; }));
+  const scored = sents.map((s, i) => { const w = words(s); return { s, i, score: w.reduce((a, x) => a + freq[x], 0) / Math.sqrt(w.length + 3) }; });
+  const ranked = scored.slice().sort((a, b) => b.score - a.score);
+  const pick = (from, n) => ranked.slice(from, from + n).sort((a, b) => a.i - b.i).map((x) => x.s);
+  const nSum = Math.min(4, Math.max(1, Math.round(sents.length / 6)));
+  const todos = sents.filter((s) => ACTION.test(s)).slice(0, 12).map((s) => ({ task: s.replace(/^(and|so|but|okay|ok|well|also)[, ]+/i, '') }));
+  return { summary: pick(0, nSum).join(' '), notes: pick(nSum, Math.min(6, Math.max(0, sents.length - nSum))), todos, highlights: pick(0, Math.min(5, Math.max(1, Math.round(sents.length / 5)))) };
+}
+
+/* ---------- render ---------- */
+function highlightRanges(text) {
+  const low = text.toLowerCase(), ranges = [];
+  ((state.analysis && state.analysis.highlights) || []).forEach((q) => {
+    q = q.trim().replace(/^["“”']+|["“”']+$/g, '').replace(/\s+/g, ' ').toLowerCase();
+    if (q.length < 6) return;
+    let i = low.indexOf(q);
+    if (i < 0) { q = q.replace(/[.!?,;:]+$/, ''); i = low.indexOf(q); }
+    if (i >= 0) ranges.push([i, i + q.length]);
+  });
+  ranges.sort((a, b) => a[0] - b[0]);
+  const merged = [];
+  ranges.forEach((r) => { const l = merged[merged.length - 1]; if (l && r[0] <= l[1]) l[1] = Math.max(l[1], r[1]); else merged.push(r.slice()); });
+  return merged;
+}
+function render(engine) {
+  const box = $('transcript'); box.textContent = '';
+  const texts = state.chunks.map((c) => c.text.trim());
+  const ranges = highlightRanges(texts.join(' '));
+  let offset = 0;
+  state.chunks.forEach((c, n) => {
+    const t = texts[n], seg = document.createElement('span');
+    seg.className = 'seg'; seg.tabIndex = 0;
+    if (c.start != null) { seg.dataset.start = c.start; const ts = document.createElement('span'); ts.className = 'ts'; ts.textContent = fmt(c.start); seg.appendChild(ts); }
+    let pos = 0;
+    ranges.forEach(([a, b]) => {
+      const s = Math.max(a - offset, 0), e = Math.min(b - offset, t.length);
+      if (s >= e || s < pos) return;
+      if (s > pos) seg.appendChild(document.createTextNode(t.slice(pos, s)));
+      const m = document.createElement('mark'); m.textContent = t.slice(s, e); seg.appendChild(m); pos = e;
+    });
+    if (pos < t.length) seg.appendChild(document.createTextNode(t.slice(pos)));
+    box.appendChild(seg); box.appendChild(document.createTextNode(' '));
+    offset += t.length + 1;
+  });
+  const a = state.analysis;
+  $('summary').textContent = a.summary || 'No summary could be made.'; $('summary').classList.toggle('empty', !a.summary);
+  fillList($('notes'), a.notes, 'No key notes found.', (li, n) => { li.textContent = n; });
+  fillList($('todos'), a.todos, 'No action items were mentioned.', (li, t, i) => {
+    const label = document.createElement('label'), cb = document.createElement('input'), span = document.createElement('span');
+    cb.type = 'checkbox'; cb.id = 'todo-' + i; cb.checked = !!t.done; cb.addEventListener('change', () => { t.done = cb.checked; });
+    span.textContent = t.task;
+    const meta = [t.owner && 'Owner: ' + t.owner, t.due && 'Due: ' + t.due].filter(Boolean).join(' · ');
+    if (meta) { const m = document.createElement('span'); m.className = 'meta'; m.textContent = meta; span.appendChild(m); }
+    label.append(cb, span); li.appendChild(label);
+  });
+  $('engine').textContent = engine; $('engine').hidden = false;
+  $('copy').disabled = $('save').disabled = $('redo').disabled = false;
+}
+function fillList(ul, items, emptyText, build) {
+  ul.textContent = '';
+  if (!items || !items.length) { const li = document.createElement('li'); li.className = 'empty'; li.textContent = emptyText; ul.appendChild(li); return; }
+  items.forEach((it, i) => { const li = document.createElement('li'); build(li, it, i); ul.appendChild(li); });
+}
+
+/* ---------- transcript ↔ audio ---------- */
+function seek(el) { const seg = el.closest && el.closest('.seg'); if (!seg || seg.dataset.start == null || $('player').hidden) return; $('player').currentTime = +seg.dataset.start; $('player').play(); }
+$('transcript').addEventListener('click', (e) => seek(e.target));
+$('transcript').addEventListener('keydown', (e) => { if (e.key === 'Enter') seek(e.target); });
+$('player').addEventListener('timeupdate', () => {
+  const t = $('player').currentTime; let cur = null;
+  document.querySelectorAll('.seg[data-start]').forEach((s) => { s.classList.remove('now'); if (+s.dataset.start <= t) cur = s; });
+  if (cur) cur.classList.add('now');
+});
+
+/* ---------- export ---------- */
+function markdown() {
+  const a = state.analysis, L = ['# ' + (state.source || 'Transcript notes'), '', '## Summary', a.summary, '', '## Key notes'];
+  a.notes.forEach((n) => L.push('- ' + n));
+  L.push('', '## To-do');
+  a.todos.forEach((t) => L.push('- [' + (t.done ? 'x' : ' ') + '] ' + t.task + (t.owner ? ' (' + t.owner + ')' : '') + (t.due ? ' — due ' + t.due : '')));
+  L.push('', '## Highlights');
+  a.highlights.forEach((h) => L.push('> ' + h, ''));
+  L.push('## Transcript', '');
+  state.chunks.forEach((c) => L.push((c.start != null ? '[' + fmt(c.start) + '] ' : '') + c.text.trim()));
+  return L.join('\n');
+}
+$('copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(markdown()); setStatus('Copied.'); } catch (e) { setStatus('Copy was blocked by the browser. Use Download instead.', true); } });
+$('save').addEventListener('click', () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([markdown()], { type: 'text/markdown' })); a.download = 'earmark-notes.md'; a.click(); });
+$('redo').addEventListener('click', async () => { busy(true); await analyze(); busy(false); });
+
+/* ---------- text-only paths ---------- */
+async function fromText(text, name) {
+  text = text.trim(); if (!text) { setStatus('Paste some text first.', true); return; }
+  busy(true); state.source = name; $('player').hidden = true;
+  state.chunks = text.split(/\n+/).filter((p) => p.trim()).map((p) => ({ start: null, text: p }));
+  await analyze(); busy(false);
+}
+$('usePaste').addEventListener('click', () => fromText($('paste').value, 'Pasted transcript'));
+const SAMPLE = "Thanks everyone for joining the Thursday planning call. The main thing today is the spring newsletter, which has to go out on the fourteenth. Open rates dropped from thirty one percent to twenty four percent over the last three issues, and most of that drop came from mobile readers. Priya thinks the newsletter is too long, and the click data backs that up because almost nobody scrolls past the second story.\nSo the plan is to cut the newsletter to three stories and put the event announcement at the top. Daniel, you need to send the final event details to Priya by Monday. I will rewrite the subject line and test two versions on a small group first. We should also fix the unsubscribe link, because two people complained it was broken last month.\nOn budget, the printer quoted four hundred dollars more than last year, which we cannot absorb. Let's ask for a second quote before we commit. Maria will call the other printer tomorrow. Remember to book the room for the volunteer evening as well, since it fills up fast in April. Next call is in two weeks, same time.";
+$('sample').addEventListener('click', () => fromText(SAMPLE, 'Sample: planning call (example text, no audio)'));
+</script>
+</body>
+</html>
